@@ -38,6 +38,8 @@ static_assert(sizeof(CSTHeader) == 256, "CSTHeader should be 256 bytes");
 constexpr std::array<u8, 4> header_magic_bytes{{'C', 'S', 'T', 0x1B}};
 
 static std::string GetSaveStatePath(u64 program_id, u64 movie_id, u32 slot) {
+    if(slot==0)
+        return "RAM";
     if (movie_id) {
         return fmt::format("{}{:016X}.movie{:016X}.{:02d}.cst",
                            FileUtil::GetUserPath(FileUtil::UserPath::StatesDir), program_id,
@@ -92,7 +94,7 @@ std::vector<SaveStateInfo> ListSaveStates(u64 program_id, u64 movie_id) {
     result.reserve(SaveStateSlotCount);
     for (u32 slot = 0; slot <= SaveStateSlotCount; ++slot) {
         const auto path = GetSaveStatePath(program_id, movie_id, slot);
-        if (!FileUtil::Exists(path)) {
+        if (slot>0 && !FileUtil::Exists(path)) {
             continue;
         }
 
@@ -167,6 +169,9 @@ void System::SaveState(u32 slot) const {
     if (file.WriteBytes(&header, sizeof(header)) != sizeof(header) ||
         file.WriteBytes(buffer.data(), buffer.size()) != buffer.size()) {
         throw std::runtime_error("Could not write to file " + path);
+    }
+    else {
+        FileUtil::quicksave_actual_size = file.GetSize();
     }
 }
 

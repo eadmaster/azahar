@@ -34,6 +34,8 @@
 
 namespace FileUtil {
 
+extern std::size_t quicksave_actual_size ;
+
 // User paths for GetUserPath
 enum class UserPath {
     CacheDir,

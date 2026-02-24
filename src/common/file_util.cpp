@@ -92,6 +92,11 @@
 // REMEMBER: strdup considered harmful!
 namespace FileUtil {
 
+static const std::size_t QUICKSAVE_DEFAULT_SIZE = 32 * 1024 * 1024; // 32 MB
+static u8 quicksave_buf[QUICKSAVE_DEFAULT_SIZE] = {0};
+std::size_t quicksave_actual_size = 0;
+
+
 using Common::GetLastErrorMsg;
 
 // Remove any ending forward slashes from directory paths
@@ -393,6 +398,9 @@ bool Copy(const std::string& srcFilename, const std::string& destFilename) {
 }
 
 u64 GetSize(const std::string& filename) {
+    if(filename=="RAM")
+        return (quicksave_actual_size);
+
     if (!Exists(filename)) {
         LOG_ERROR(Common_Filesystem, "failed {}: No such file", filename);
         return 0;
@@ -1168,7 +1176,11 @@ bool IOFile::Open() {
 
     m_good = m_file != nullptr;
 #else
-    m_file = std::fopen(filename.c_str(), openmode.c_str());
+
+    if(filename == "RAM")
+        m_file = fmemopen(quicksave_buf, QUICKSAVE_DEFAULT_SIZE, openmode.c_str());
+    else
+        m_file = std::fopen(filename.c_str(), openmode.c_str());
     m_good = m_file != nullptr;
 #endif
 
